@@ -157,6 +157,12 @@ function _drush_make_devrelease_get_revision($project, $name, $version, $core, $
     $to = $git->exec('rev-list %s -1', $branch);
     $hashes = $git->exec('rev-list %s..%s --reverse', $from[0], $to[0]);
 
+    // The "to" commit may be a valid revision too, in the case it is not the
+    // "from" commit.
+    if ($from[0] != $to[0]) {
+      $hashes[] = $to[0];
+    }
+
     // When we've got a valid hash for the given offset, we can download via git.
     $hash = $hashes[$offset];
 
