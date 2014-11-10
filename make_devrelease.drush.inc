@@ -126,12 +126,12 @@ function _drush_make_devrelease_update_project_info($project, $name, $core) {
  * @throws Exception
  */
 function _drush_make_devrelease_get_revision($project, $name, $version, $core, $release, $offset) {
-  drush_print(dt("Getting revision information for @name: @version (@core-@release)", array(
+  drush_log(dt("Getting revision information for @name: @version (@core-@release)", array(
     '@name' => $name,
     '@version' => $version,
     '@core' => $core,
     '@release' => $release,
-  )));
+  )), 'status');
 
   $download = isset($project['download']) ? $project['download'] : array();
 
@@ -167,6 +167,17 @@ function _drush_make_devrelease_get_revision($project, $name, $version, $core, $
 
   // Remove the temp location again.
   drush_delete_tmp_dir($tmp_location);
+
+  // Log error when there is no hash.
+  if (empty($hash)) {
+    drush_log(dt("No revision found for @name: @version (@core-@release)", array(
+      '@name' => $name,
+      '@version' => $version,
+      '@core' => $core,
+      '@release' => $release,
+    )), 'error');
+  }
+
   return $hash;
 }
 
