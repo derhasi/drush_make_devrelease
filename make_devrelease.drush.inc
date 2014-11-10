@@ -13,6 +13,11 @@ function make_devrelease_drush_command() {
       'arguments' => array(
         'makefile' => 'Path to the makefile to update',
       ),
+      'options' => array(
+        'refetch' => array(
+          'description' => 'Add this option to refetch revision information',
+        ),
+      ),
     ),
   );
 }
@@ -54,7 +59,8 @@ function drush_make_devrelease_make_generatedev($makefile) {
 function _drush_make_devrelease_update_projects(&$projects, $core) {
 
   foreach ($projects as $name => $project) {
-    if (empty($project['download']['type']) && _drush_make_devrelease_get_version($project, $core)) {
+    $fetch = empty($project['download']['type']) || (drush_get_option('refetch') && $project['download']['type'] == 'git');
+    if ($fetch && _drush_make_devrelease_get_version($project, $core)) {
       $projects[$name] = _drush_make_devrelease_update_project_info($project, $name, $core);
     }
   }
@@ -90,17 +96,18 @@ function _drush_make_devrelease_get_version($project, $core) {
 function _drush_make_devrelease_update_project_info($project, $name, $core) {
 
   $matches = array();
-  if (preg_match(MAKE_DEVRELEASE_DEV_PATTERN, $project['version'], $matches)) {
+  $version = _drush_make_devrelease_get_version($project, $core);
+  if (preg_match(MAKE_DEVRELEASE_DEV_PATTERN, $version, $matches)) {
     list(, $release, , $offset) = $matches;
 
     // Keep original version number for reference.
-    $project['_devrelease'] = $project['version'];
+    $project['_devrelease'] = $version;
 
     if ($offset == 0) {
       $project['version'] = $release;
     }
     else {
-      $revision = _drush_make_devrelease_get_revision($project, $name, $project['version'], $core, $release, $offset);
+      $revision = _drush_make_devrelease_get_revision($project, $name, $version, $core, $release, $offset);
       if ($revision) {
         unset($project['version']);
         $project['download']['type'] = 'git';
